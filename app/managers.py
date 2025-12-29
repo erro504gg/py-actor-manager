@@ -1,6 +1,6 @@
 # managers.py
 import sqlite3
-from typing import List, Optional
+from typing import List
 
 from models import Actor
 
@@ -38,7 +38,16 @@ class ActorManager:
         cur = self.conn.cursor()
         cur.execute(f"SELECT id, first_name, last_name FROM {self.table_name}")
         rows = cur.fetchall()
-        return [Actor(id=row["id"], first_name=row["first_name"], last_name=row["last_name"]) for row in rows] if rows else []
+        actors: List[Actor] = []
+        for row in rows:
+            actors.append(
+                Actor(
+                    id=row["id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"],
+                )
+            )
+        return actors
 
     def update(self, pk: int, new_first_name: str, new_last_name: str) -> None:
         self.conn.execute(
@@ -48,10 +57,13 @@ class ActorManager:
         self.conn.commit()
 
     def delete(self, pk: int) -> None:
-        self.conn.execute(f"DELETE FROM {self.table_name} WHERE id = ?", (pk,))
+        self.conn.execute(
+            f"DELETE FROM {self.table_name} WHERE id = ?",
+            (pk,),
+        )
         self.conn.commit()
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self.conn.close()
         except Exception:
